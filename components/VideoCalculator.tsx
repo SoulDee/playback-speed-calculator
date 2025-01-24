@@ -1,92 +1,189 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useReducer, useEffect, useCallback } from 'react';
 import ProgressBar from './ProgressBar';
+import { formatTime } from '../lib/timeUtils';
 
 const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1";
 const commonInputClass = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white";
 
-export default function VideoCalculator() {
-  const [totalHours, setTotalHours] = useState<string>('2');
-  const [totalMinutes, setTotalMinutes] = useState<string>('0');
-  const [totalSeconds, setTotalSeconds] = useState<string>('0');
-  const [watchedHours, setWatchedHours] = useState<string>('0');
-  const [watchedMinutes, setWatchedMinutes] = useState<string>('0');
-  const [watchedSeconds, setWatchedSeconds] = useState<string>('0');
-  const [speed, setSpeed] = useState<string>('1.5');
-  const [result, setResult] = useState<string>('');
-  const [timeSaved, setTimeSaved] = useState<string>('');
+interface State {
+  total: {
+    hours: string;
+    minutes: string;
+    seconds: string;
+  };
+  watched: {
+    hours: string;
+    minutes: string;
+    seconds: string;
+  };
+  speed: string;
+  result: string;
+  timeSaved: string;
+  error?: string;
+}
 
-  const formatTime = useCallback((seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = Math.round(seconds % 60);
+type Action =
+  | { type: 'SET_TOTAL_TIME'; payload: { field: 'hours' | 'minutes' | 'seconds'; value: string } }
+  | { type: 'SET_WATCHED_TIME'; payload: { field: 'hours' | 'minutes' | 'seconds'; value: string } }
+  | { type: 'SET_SPEED'; payload: string }
+  | { type: 'SET_RESULT'; payload: { result: string; timeSaved: string } }
+  | { type: 'SET_ERROR'; payload: string };
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'SET_TOTAL_TIME':
+      return {
+        ...state,
+        total: {
+          ...state.total,
+          [action.payload.field]: action.payload.value
+        }
+      };
+    case 'SET_WATCHED_TIME':
+      return {
+        ...state,
+        watched: {
+          ...state.watched,
+          [action.payload.field]: action.payload.value
+        }
+      };
+    case 'SET_SPEED':
+      return {
+        ...state,
+        speed: action.payload
+      };
+    case 'SET_RESULT':
+      return {
+        ...state,
+        result: action.payload.result,
+        timeSaved: action.payload.timeSaved,
+        error: undefined
+      };
+    case 'SET_ERROR':
+      return {
+        ...state,
+        result: '',
+        timeSaved: '',
+        error: action.payload
+      };
+    default:
+      return state;
+  }
+}
+
+const initialState: State = {
+  total: {
+    hours: '2',
+    minutes: '0',
+    seconds: '0'
+  },
+  watched: {
+    hours: '0',
+    minutes: '0',
+    seconds: '0'
+  },
+  speed: '1.5',
+  result: '',
+  timeSaved: ''
+};
+
+export default function VideoCalculator() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const validateInput = useCallback(() => {
+    const total = {
+      hours: parseFloat(state.total.hours),
+      minutes: parseFloat(state.total.minutes),
+      seconds: parseFloat(state.total.seconds)
+    };
     
-    return `${hours > 0 ? `${hours}h ` : ''}${minutes > 0 || hours > 0 ? `${minutes}m ` : ''}${remainingSeconds}s`;
-  }, []);
+    const watched = {
+      hours: parseFloat(state.watched.hours),
+      minutes: parseFloat(state.watched.minutes),
+      seconds: parseFloat(state.watched.seconds)
+    };
+    
+    const speed = parseFloat(state.speed);
+
+    // 验证总时长
+    if (isNaN(total.hours) || total.hours < 0 ||
+        isNaN(total.minutes) || total.minutes < 0 || total.minutes > 59 ||
+        isNaN(total.seconds) || total.seconds < 0 || total.seconds > 59) {
+      dispatch({ type: 'SET_ERROR', payload: 'Invalid total time format' });
+      return false;
+    }
+
+    // 验证已观看时长
+    if (isNaN(watched.hours) || watched.hours < 0 ||
+        isNaN(watched.minutes) || watched.minutes < 0 || watched.minutes > 59 ||
+        isNaN(watched.seconds) || watched.seconds < 0 || watched.seconds > 59) {
+      dispatch({ type: 'SET_ERROR', payload: 'Invalid watched time format' });
+      return false;
+    }
+
+    // 验证播放速度
+    if (isNaN(speed) || speed < 0.25 || speed > 4) {
+      dispatch({ type: 'SET_ERROR', payload: 'Speed must be between 0.25x and 4x' });
+      return false;
+    }
+
+    // 验证已观看时长不超过总时长
+    const totalSeconds = (total.hours * 3600) + (total.minutes * 60) + total.seconds;
+    const watchedSeconds = (watched.hours * 3600) + (watched.minutes * 60) + watched.seconds;
+    
+    if (watchedSeconds > totalSeconds) {
+      dispatch({ type: 'SET_ERROR', payload: 'Watched time cannot exceed total time' });
+      return false;
+    }
+
+    return true;
+  }, [state.total, state.watched, state.speed]);
 
   const calculateDuration = useCallback(() => {
-    const totalTimeInSeconds = (parseFloat(totalHours || '0') * 3600) + 
-                             (parseFloat(totalMinutes || '0') * 60) + 
-                             parseFloat(totalSeconds || '0');
+    if (!validateInput()) return;
+
+    const totalTimeInSeconds = (parseFloat(state.total.hours) * 3600) + 
+                             (parseFloat(state.total.minutes) * 60) + 
+                             parseFloat(state.total.seconds);
     
-    const watchedTimeInSeconds = (parseFloat(watchedHours || '0') * 3600) + 
-                                (parseFloat(watchedMinutes || '0') * 60) + 
-                                parseFloat(watchedSeconds || '0');
+    const watchedTimeInSeconds = (parseFloat(state.watched.hours) * 3600) + 
+                                (parseFloat(state.watched.minutes) * 60) + 
+                                parseFloat(state.watched.seconds);
     
     const remainingSeconds = totalTimeInSeconds - watchedTimeInSeconds;
-    const speedFloat = parseFloat(speed || '1');
+    const speedFloat = parseFloat(state.speed);
     
-    if (remainingSeconds <= 0 || speedFloat <= 0) {
-      setResult('');
-      setTimeSaved('');
-      return;
-    }
-    
-    const normalDuration = remainingSeconds;
     const speedDuration = remainingSeconds / speedFloat;
-    const timeDifference = normalDuration - speedDuration;
+    const timeDifference = remainingSeconds - speedDuration;
     
-    setResult(formatTime(speedDuration));
-    
-    if (speedFloat > 1) {
-      setTimeSaved(`Save ${formatTime(timeDifference)} with ${speedFloat}x playback`);
-    } else if (speedFloat < 1) {
-      setTimeSaved(`Add ${formatTime(-timeDifference)} with ${speedFloat}x playback`);
-    } else {
-      setTimeSaved('');
-    }
-  }, [totalHours, totalMinutes, totalSeconds, watchedHours, watchedMinutes, watchedSeconds, speed, formatTime]);
+    const result = formatTime(speedDuration);
+    const timeSaved = speedFloat > 1 
+      ? `Save ${formatTime(timeDifference)} with ${speedFloat}x playback`
+      : speedFloat < 1
+      ? `Add ${formatTime(-timeDifference)} with ${speedFloat}x playback`
+      : '';
 
-  const calculateResult = useCallback(() => {
-    const total = (Number(totalHours) * 3600) + (Number(totalMinutes) * 60) + Number(totalSeconds);
-    const watched = (Number(watchedHours) * 3600) + (Number(watchedMinutes) * 60) + Number(watchedSeconds);
-    const speedNum = Number(speed);
-
-    if (total > 0 && speedNum > 0) {
-      const remaining = total - watched;
-      const timeAtSpeed = remaining / speedNum;
-      const hours = Math.floor(timeAtSpeed / 3600);
-      const minutes = Math.floor((timeAtSpeed % 3600) / 60);
-      const seconds = Math.floor(timeAtSpeed % 60);
-
-      setResult(`${hours}h ${minutes}m ${seconds}s`);
-
-      const savedTime = remaining - timeAtSpeed;
-      const savedHours = Math.floor(savedTime / 3600);
-      const savedMinutes = Math.floor((savedTime % 3600) / 60);
-      const savedSeconds = Math.floor(savedTime % 60);
-
-      setTimeSaved(`${savedHours}h ${savedMinutes}m ${savedSeconds}s`);
-    } else {
-      setResult('Invalid input');
-      setTimeSaved('');
-    }
-  }, [totalHours, totalMinutes, totalSeconds, watchedHours, watchedMinutes, watchedSeconds, speed]);
+    dispatch({ type: 'SET_RESULT', payload: { result, timeSaved } });
+  }, [state.total, state.watched, state.speed]);
 
   useEffect(() => {
     calculateDuration();
-    calculateResult();
-  }, [calculateDuration, calculateResult]);
+  }, [calculateDuration]);
+
+  const handleTimeChange = (type: 'total' | 'watched', field: 'hours' | 'minutes' | 'seconds') => 
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      if (type === 'total') {
+        dispatch({ type: 'SET_TOTAL_TIME', payload: { field, value } });
+      } else {
+        dispatch({ type: 'SET_WATCHED_TIME', payload: { field, value } });
+      }
+    };
+
+  const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: 'SET_SPEED', payload: e.target.value });
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-8 mb-8">
@@ -101,8 +198,8 @@ export default function VideoCalculator() {
                 id="totalHours"
                 min="0"
                 step="1"
-                value={totalHours}
-                onChange={(e) => setTotalHours(e.target.value)}
+                value={state.total.hours}
+                onChange={handleTimeChange('total', 'hours')}
                 className={commonInputClass}
               />
             </div>
@@ -114,8 +211,8 @@ export default function VideoCalculator() {
                 min="0"
                 max="59"
                 step="1"
-                value={totalMinutes}
-                onChange={(e) => setTotalMinutes(e.target.value)}
+                value={state.total.minutes}
+                onChange={handleTimeChange('total', 'minutes')}
                 className={commonInputClass}
               />
             </div>
@@ -127,8 +224,8 @@ export default function VideoCalculator() {
                 min="0"
                 max="59"
                 step="1"
-                value={totalSeconds}
-                onChange={(e) => setTotalSeconds(e.target.value)}
+                value={state.total.seconds}
+                onChange={handleTimeChange('total', 'seconds')}
                 className={commonInputClass}
               />
             </div>
@@ -145,8 +242,8 @@ export default function VideoCalculator() {
                 id="watchedHours"
                 min="0"
                 step="1"
-                value={watchedHours}
-                onChange={(e) => setWatchedHours(e.target.value)}
+                value={state.watched.hours}
+                onChange={handleTimeChange('watched', 'hours')}
                 className={commonInputClass}
               />
             </div>
@@ -158,8 +255,8 @@ export default function VideoCalculator() {
                 min="0"
                 max="59"
                 step="1"
-                value={watchedMinutes}
-                onChange={(e) => setWatchedMinutes(e.target.value)}
+                value={state.watched.minutes}
+                onChange={handleTimeChange('watched', 'minutes')}
                 className={commonInputClass}
               />
             </div>
@@ -171,8 +268,8 @@ export default function VideoCalculator() {
                 min="0"
                 max="59"
                 step="1"
-                value={watchedSeconds}
-                onChange={(e) => setWatchedSeconds(e.target.value)}
+                value={state.watched.seconds}
+                onChange={handleTimeChange('watched', 'seconds')}
                 className={commonInputClass}
               />
             </div>
@@ -188,8 +285,8 @@ export default function VideoCalculator() {
             id="speed"
             min="0.25"
             step="0.25"
-            value={speed}
-            onChange={(e) => setSpeed(e.target.value)}
+            value={state.speed}
+            onChange={handleSpeedChange}
             className={commonInputClass}
             placeholder="Enter playback speed (e.g., 1.5)"
           />
@@ -198,10 +295,33 @@ export default function VideoCalculator() {
         <div className="space-y-2">
           <label className={labelClass}>Time Comparison</label>
           <ProgressBar
-            totalSeconds={(Number(totalHours) * 3600) + (Number(totalMinutes) * 60) + Number(totalSeconds)}
-            speed={Number(speed)}
+            totalSeconds={(Number(state.total.hours) * 3600) + 
+                         (Number(state.total.minutes) * 60) + 
+                         Number(state.total.seconds)}
+            speed={Number(state.speed)}
           />
         </div>
+
+        {state.result && (
+          <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              Estimated Time: <span className="text-primary">{state.result}</span>
+            </p>
+            {state.timeSaved && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {state.timeSaved}
+              </p>
+            )}
+          </div>
+        )}
+
+        {state.error && (
+          <div className="p-4 bg-red-50 dark:bg-red-900 rounded-lg">
+            <p className="text-sm font-medium text-red-700 dark:text-red-200">
+              {state.error}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
