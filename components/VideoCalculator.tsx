@@ -1,6 +1,5 @@
 'use client';
 import { useReducer, useEffect, useCallback } from 'react';
-import ProgressBar from './ProgressBar';
 import { formatTime } from '../lib/timeUtils';
 
 const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1";
@@ -165,7 +164,7 @@ export default function VideoCalculator() {
       : '';
 
     dispatch({ type: 'SET_RESULT', payload: { result, timeSaved } });
-  }, [state.total, state.watched, state.speed]);
+  }, [state.total, state.watched, state.speed, validateInput]);
 
   useEffect(() => {
     calculateDuration();
@@ -276,44 +275,48 @@ export default function VideoCalculator() {
           </div>
         </div>
 
-        <div>
-          <label htmlFor="speed" className={labelClass}>
-            Playback Speed Multiplier
-          </label>
-          <input
-            type="number"
-            id="speed"
-            min="0.25"
-            step="0.25"
-            value={state.speed}
-            onChange={handleSpeedChange}
-            className={commonInputClass}
-            placeholder="Enter playback speed (e.g., 1.5)"
-          />
-        </div>
+        <div className="space-y-4">
+          <label className={labelClass}>Time Comparison Table</label>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Playback Speed</th>
+                  <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining Time</th>
+                  <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Saved</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Array.from({ length: 9 }, (_, i) => 1 + i * 0.25).map((speed) => {
+                  const totalSeconds = (Number(state.total.hours) * 3600) + 
+                                    (Number(state.total.minutes) * 60) + 
+                                    Number(state.total.seconds);
+                  const watchedSeconds = (Number(state.watched.hours) * 3600) + 
+                                      (Number(state.watched.minutes) * 60) + 
+                                      Number(state.watched.seconds);
+                  const remainingSeconds = totalSeconds - watchedSeconds;
+                  const remainingAtSpeed = remainingSeconds / speed;
+                  const timeSaved = remainingSeconds - remainingAtSpeed;
 
-        <div className="space-y-2">
-          <label className={labelClass}>Time Comparison</label>
-          <ProgressBar
-            totalSeconds={(Number(state.total.hours) * 3600) + 
-                         (Number(state.total.minutes) * 60) + 
-                         Number(state.total.seconds)}
-            speed={Number(state.speed)}
-          />
-        </div>
+                  const formatTime = (seconds: number) => {
+                    const h = Math.floor(seconds / 3600);
+                    const m = Math.floor((seconds % 3600) / 60);
+                    const s = Math.floor(seconds % 60);
+                    return `${h}h ${m}m ${s}s`;
+                  };
 
-        {state.result && (
-          <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              Estimated Time: <span className="text-primary">{state.result}</span>
-            </p>
-            {state.timeSaved && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {state.timeSaved}
-              </p>
-            )}
+                  return (
+                    <tr key={speed} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{speed}x</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatTime(remainingAtSpeed)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatTime(timeSaved)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        )}
+        </div>
 
         {state.error && (
           <div className="p-4 bg-red-50 dark:bg-red-900 rounded-lg">

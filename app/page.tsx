@@ -19,35 +19,34 @@ const SmartPlaybackGuide = () => {
       <h2 className='text-xl font-semibold text-gray-900 dark:text-white'>Smart Playback Guide</h2>
 
       <div className='space-y-4'>
-        <div className='space-y-2'>
-          <h3 className='text-lg font-medium text-gray-900 dark:text-white'>Quick Start</h3>
-          <div className='space-y-3 text-sm text-gray-600 dark:text-gray-400'>
-            <p>1. Enter the full video duration</p>
-            <p>2. Input your current progress (if any)</p>
-            <p>3. Choose your preferred playback speed</p>
-            <p>4. See your optimized viewing time instantly</p>
-          </div>
+        <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg'>
+          <h3 className='text-lg font-medium text-gray-900 dark:text-white mb-3'>Quick Start</h3>
+          <ul className='list-disc list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400'>
+            <li>Enter the full video duration</li>
+            <li>Input your current progress (if any)</li>
+            <li>See your optimized viewing time instantly</li>
+          </ul>
         </div>
 
-        <div className='space-y-2'>
-          <h3 className='text-lg font-medium text-gray-900 dark:text-white'>Speed Selection Guide</h3>
+        <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg'>
+          <h3 className='text-lg font-medium text-gray-900 dark:text-white mb-3'>Speed Selection Guide</h3>
           <div className='grid grid-cols-2 gap-4 text-sm'>
-            <div className='p-3 bg-gray-50 dark:bg-gray-900 rounded-lg'>
+            <div className='p-3 bg-gray-100 dark:bg-gray-800 rounded-lg'>
               <p className='font-medium text-primary mb-2'>Casual Viewing</p>
               <p className='text-gray-600 dark:text-gray-400'>1x - 1.25x</p>
               <p className='text-xs text-gray-500 dark:text-gray-500 mt-1'>Perfect for entertainment</p>
             </div>
-            <div className='p-3 bg-gray-50 dark:bg-gray-900 rounded-lg'>
+            <div className='p-3 bg-gray-100 dark:bg-gray-800 rounded-lg'>
               <p className='font-medium text-primary mb-2'>Learning</p>
               <p className='text-gray-600 dark:text-gray-400'>1.25x - 1.5x</p>
               <p className='text-xs text-gray-500 dark:text-gray-500 mt-1'>Ideal for tutorials</p>
             </div>
-            <div className='p-3 bg-gray-50 dark:bg-gray-900 rounded-lg'>
+            <div className='p-3 bg-gray-100 dark:bg-gray-800 rounded-lg'>
               <p className='font-medium text-primary mb-2'>Review</p>
               <p className='text-gray-600 dark:text-gray-400'>1.5x - 1.75x</p>
               <p className='text-xs text-gray-500 dark:text-gray-500 mt-1'>For familiar content</p>
             </div>
-            <div className='p-3 bg-gray-50 dark:bg-gray-900 rounded-lg'>
+            <div className='p-3 bg-gray-100 dark:bg-gray-800 rounded-lg'>
               <p className='font-medium text-primary mb-2'>Speed Watch</p>
               <p className='text-gray-600 dark:text-gray-400'>1.75x - 2x</p>
               <p className='text-xs text-gray-500 dark:text-gray-500 mt-1'>For quick overview</p>
@@ -56,17 +55,7 @@ const SmartPlaybackGuide = () => {
         </div>
 
         <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg'>
-          <p className='text-sm font-medium text-gray-900 dark:text-white mb-2'> Pro Tips</p>
-          <ul className='space-y-2 text-sm text-gray-600 dark:text-gray-400'>
-            <li>• Start with lower speeds and gradually increase</li>
-            <li>• Use 1.25x for minimal audio distortion</li>
-            <li>• Take breaks during longer sessions</li>
-            <li>• Adjust based on content complexity</li>
-          </ul>
-        </div>
-
-        <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg'>
-          <p className='text-sm font-medium text-gray-900 dark:text-white mb-3'>Quick Reference Table</p>
+          <h3 className='text-lg font-medium text-gray-900 dark:text-white mb-3'>Quick Reference Table</h3>
           <div className='overflow-x-auto'>
             <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
               <thead>
@@ -126,15 +115,56 @@ const SmartPlaybackGuide = () => {
             </table>
           </div>
         </div>
+
+        <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg'>
+          <h3 className='text-lg font-medium text-gray-900 dark:text-white mb-3'>Pro Tips</h3>
+          <ul className='list-disc list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400'>
+            <li>Start with lower speeds and gradually increase</li>
+            <li>Use 1.25x for minimal audio distortion</li>
+            <li>Take breaks during longer sessions</li>
+            <li>Adjust based on content complexity</li>
+          </ul>
+        </div>
+
+        <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg'>
+          <h3 className='text-lg font-medium text-gray-900 dark:text-white mb-3'>How it works?</h3>
+          <ul className="list-disc list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <li>
+              Remaining Time = (Total Time - Watched Time) ÷ Playback Speed
+              <p className="ml-5 mt-1 text-xs text-gray-500 dark:text-gray-500">
+                Example: For a 2h video, watched 30min, at 2x speed:<br />
+                (2h - 30min = 90min) ÷ 2 = 45min remaining
+              </p>
+            </li>
+            <li>
+              Time Saved = (Total Time - Watched Time) - Remaining Time
+              <p className="ml-5 mt-1 text-xs text-gray-500 dark:text-gray-500">
+                Example: From above, original remaining time is 90min:<br />
+                90min - 45min = 45min saved
+              </p>
+            </li>
+            <li>
+              Results are rounded to the nearest second
+              <p className="ml-5 mt-1 text-xs text-gray-500 dark:text-gray-500">
+                Example: 1h 30min 15.7s → 1h 30min 16s
+              </p>
+            </li>
+            <li>
+              <a href="#examples" className="text-primary hover:text-primary-dark">
+                View more examples →
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   );
 };
 
-const Questions = () => {
+const Examples = () => {
   return (
     <div className='bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg mb-8'>
-      <h2 className='text-xl font-semibold text-gray-900 dark:text-white mb-4'>Frequently Asked Questions</h2>
+      <h2 id='examples' className='text-xl font-semibold text-gray-900 dark:text-white mb-4'>Examples</h2>
       <div className='space-y-6'>
         <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg'>
           <h3 className='text-lg font-medium text-gray-900 dark:text-white mb-3'>
@@ -197,7 +227,7 @@ export default function Home() {
         <Header />
         <VideoCalculator />
         <SmartPlaybackGuide />
-        <Questions />
+        <Examples />
       </div>
     </div>
   );
