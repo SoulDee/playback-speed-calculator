@@ -8,7 +8,7 @@ import { GA_TRACKING_ID } from '@/config/analytics';
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Playback Speed Calculator | Save Time Learning',
+  title: 'Playback Speed Calculator',
   description: 'Calculate how much time you can save by adjusting playback speeds. Perfect for online courses, tutorials, and movies. Free online tool for efficient learning.',
   authors: [{ name: 'Playback Speed Calculator' }],
   icons: {
